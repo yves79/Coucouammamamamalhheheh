@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en temps réel avec Connexion Utilisateur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container, .chat-container {
+            width: 400px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chat-box {
+            flex-grow: 1;
+            width: 100%;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+            max-height: 300px;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            width: fit-content;
+            max-width: 80%;
+        }
+        .person1 {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            text-align: left;
+            align-self: flex-start;
+        }
+        .person2 {
+            background-color: #c3e6cb;
+            color: #155724;
+            text-align: right;
+            align-self: flex-end;
+        }
+        .input-container {
+            display: flex;
+            width: 100%;
+        }
+        .input-container input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-right: 10px;
+        }
+        .input-container button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Container pour la connexion -->
+<div id="loginContainer" class="login-container">
+    <h2>Connexion au Chat</h2>
+    <input type="text" id="usernameInput" placeholder="Nom d'utilisateur" />
+    <button onclick="login()">Se connecter</button>
+</div>
+
+<!-- Container pour le chat (caché au début) -->
+<div id="chatContainer" class="chat-container" style="display: none;">
+    <h3 id="welcomeMessage"></h3>
+    <div id="chatBox" class="chat-box">
+        <!-- Les messages s'afficheront ici -->
+    </div>
+    <div class="input-container">
+        <input type="text" id="messageInput" placeholder="Écrire un message...">
+        <button onclick="sendMessage()">Envoyer</button>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;  // Stocke le nom d'utilisateur de la personne connectée
+    const allowedUsers = ['Shadows-Mercury', 'Mia-Black'];  // Liste des utilisateurs autorisés
+    const chatHistory = [];  // Historique des messages
+
+    function login() {
+        const usernameInput = document.getElementById('usernameInput').value.trim();
+        
+        // Vérifie si le nom d'utilisateur est autorisé
+        if (allowedUsers.includes(usernameInput)) {
+            currentUser = usernameInput;
+            document.getElementById('welcomeMessage').textContent = `Bienvenue, ${currentUser}!`;
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'flex';
+            loadChatHistory();
+        } else {
+            alert("Nom d'utilisateur non reconnu !");
+        }
+    }
+
+    function loadChatHistory() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '';  // Efface la boîte de chat
+
+        // Charge l'historique des messages
+        chatHistory.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (message.user === 'Shadows-Mercury' ? 'person1' : 'person2');
+            messageDiv.textContent = `${message.user}: ${message.text}`;
+            chatBox.appendChild(messageDiv);
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;  // Scroll vers le bas
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const messageText = messageInput.value.trim();
+
+        if (messageText !== "" && currentUser !== null) {
+            const chatBox = document.getElementById('chatBox');
+
+            // Ajoute le message à l'historique des messages
+            const message = { user: currentUser, text: messageText };
+            chatHistory.push(message);
+
+            // Affiche le message dans la boîte de chat
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (currentUser === 'Shadows-Mercury' ? 'person1' : 'person2');
+            messageDiv.textContent = `${currentUser}: ${messageText}`;
+            chatBox.appendChild(messageDiv);
+
+            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll vers le bas
+            messageInput.value = '';  // Vide le champ de texte
+
+            // Envoyer une notification (facultatif)
+            if (Notification.permission === "granted") {
+                new Notification(`${currentUser} a envoyé un message`, {
+                    body: messageText,
+                    icon: 'https://via.placeholder.com/50'
+                });
+            }
+        }
+    }
+
+    // Demande de permission pour les notifications
+    if (Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+
+    // Permet d'envoyer le message avec la touche "Enter"
+    document.getElementById('messageInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
